@@ -1,7 +1,7 @@
 import os
 import pickle
 import pandas as pd
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 
 app = Flask(__name__)
 
@@ -10,7 +10,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, 'Cleanedcar.csv')
 MODEL_PATH = os.path.join(BASE_DIR, 'model.pkl')
 
-# Load model and dataset
+# Load model and dataset safely
 model = pickle.load(open(MODEL_PATH, "rb"))
 df = pd.read_csv(CSV_PATH)
 
@@ -33,8 +33,12 @@ def home():
     companies, company_car, car_fuel = get_dropdown_data()
     return render_template("index.html", companies=companies, company_car=company_car, car_fuel=car_fuel)
 
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=["GET", "POST"])
 def predict():
+    # Redirect GET requests (e.g., manually opening /predict in address bar) back to home
+    if request.method == "GET":
+        return redirect(url_for("home"))
+
     companies, company_car, car_fuel = get_dropdown_data()
     
     name = request.form.get("name")
