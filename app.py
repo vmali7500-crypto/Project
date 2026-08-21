@@ -1,51 +1,60 @@
 import os
 import pickle
 import pandas as pd
-from flask import Flask, render_template, request
+from flask import Flask, request, render_template
 
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, 'Cleanedcar.csv')
-model_PATH = os.path.join(BASE_DIR, 'model.pkl')
+MODEL_PATH = os.path.join(BASE_DIR, 'model.pkl')
 
+model = pickle.load(open(MODEL_PATH, "rb"))
 df = pd.read_csv(CSV_PATH)
-model = pickle.load(open(model_PATH, 'rb'))
 
-@app.route('/')
-def home():
+def get_dropdown_data():
     companies = sorted(df['company'].unique())
-    car_models = sorted(df['name'].unique())
-    years = sorted(df['year'].unique(), reverse=True)
-    fuel_types = df['fuel_type'].unique()
-    
     company_car = {}
     for company in companies:
         company_car[company] = sorted(df[df['company'] == company]['name'].unique().tolist())
-        
-    return render_template(
-        'index.html',
-        companies=companies,
-        car_models=car_models,
-        years=years,
-        fuel_types=fuel_types,
-        company_car=company_car
-    )
+    return companies, company_car
 
-@app.route('/predict', methods=['POST'])
+@app.route("/")
+def home():
+    companies, company_car = get_dropdown_data()
+    return render_template("index.html", companies=companies, company_car=company_car)
+
+@app.route("/predict", methods=["POST"])
 def predict():
-    if request.method == 'POST':
-        company = request.form.get('company')
-        car_model = request.form.get('car_model')
-        year = int(request.form.get('year'))
-        fuel_type = request.form.get('fuel_type')
-        kilo_driven = int(request.form.get('kilo_driven'))
+    companies, company_car = get_dropdown_data()
+    
+    name = request.form.get("name")
+    company = request.form.get("company")
+    year = int(request.form.get("year"))
+    kms_driven = int(request.form.get("kms_driven"))
+    fuel_type = request.form.get("fuel_type")
 
-        prediction = model.predict(pd.DataFrame([[car_model, company, year, kilo_driven, fuel_type]], 
-                                                columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']))
-        
-        return str(round(prediction[0], 2))
+    if not fuel_type:
+        return render_template("index.html", 
+                               companies=companies, 
+                               company_car=company_car, 
+                               prediction_text="Please select fuel type")
 
-if __name__ == '__main__':
+    input_data = pd.DataFrame([{
+        'name': name,
+        'company': company,
+        'year': year,
+        'kms_driven': kms_driven,
+        'fuel_type': fuel_type
+    }])
+
+    prediction = model.predict(input_data)[0]
+
+    return render_template("index.html", 
+                           companies=companies, 
+                           company_car=company_car, 
+                           prediction_text=f"Estimated Price: ₹ {round(prediction, 2)}")
+
+if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
