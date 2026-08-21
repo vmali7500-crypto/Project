@@ -5,14 +5,12 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Construct absolute paths relative to app.py location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, 'Cleanedcar.csv')
-MODEL_PATH = os.path.join(BASE_DIR, 'LinearRegressionModel.pkl')
+model_PATH = os.path.join(BASE_DIR, 'model.pkl')
 
-# Load dataset and model safely
 df = pd.read_csv(CSV_PATH)
-model = pickle.load(open(MODEL_PATH, 'rb'))
+model = pickle.load(open(model_PATH, 'rb'))
 
 @app.route('/')
 def home():
@@ -21,7 +19,6 @@ def home():
     years = sorted(df['year'].unique(), reverse=True)
     fuel_types = df['fuel_type'].unique()
     
-    # Create a mapping dictionary of company -> car models for dynamic dropdowns
     company_car = {}
     for company in companies:
         company_car[company] = sorted(df[df['company'] == company]['name'].unique().tolist())
