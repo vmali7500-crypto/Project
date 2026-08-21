@@ -6,29 +6,29 @@
 <body>
 
 <style>
-    body{
+    body {
         background-color: black;
     }
-    header{
+    header {
         height: 50px;
-        text-align:center;
+        text-align: center;
         background-color: aqua;
     }
-    main{
+    main {
         margin: 5px 20px;
         text-align: center;
         font-size: 20px;
         background-color: rgb(231, 217, 228);
         padding: 20px;
     }
-    .enter{
+    .enter {
         font-size: 30px;
     }
-    footer{
+    footer {
         margin-top: 20px;
         text-align: center;
     }
-    .prediction{
+    .prediction {
         background-color: aquamarine;
         text-align: center;
         font-size: 25px;
@@ -56,7 +56,7 @@
     </select><br><br>
 
     <label>Car Name:</label><br>
-    <select name="name" id="car_name" required>
+    <select name="name" id="car_name" onchange="updatefuels()" required>
         <option value="" disabled selected>Select Car Name</option>
     </select><br><br>
 
@@ -67,12 +67,8 @@
     <input type="number" name="kms_driven" required><br><br>
 
     <label>Fuel Type:</label><br>
-    <select name="fuel_type" required>
+    <select name="fuel_type" id="fuel_type" required>
         <option value="" disabled selected>Select Fuel Type</option>
-        <option value="Petrol">Petrol</option>
-        <option value="Diesel">Diesel</option>
-        <option value="CNG">CNG</option>
-        <option value="LPG">LPG</option>
     </select><br><br>
 
     <button type="submit">Predict Price</button>
@@ -88,19 +84,38 @@
 
 <script>
 const companycarData = {{ company_car | tojson | safe }};
+const carfuelData = {{ car_fuel | tojson | safe }};
 
-function updatecars(){
+function updatecars() {
     const company = document.getElementById("company").value;
     const carselect = document.getElementById("car_name");
+    const fuelselect = document.getElementById("fuel_type");
 
     carselect.innerHTML = '<option value="" disabled selected>Select Car Name</option>';
+    fuelselect.innerHTML = '<option value="" disabled selected>Select Fuel Type</option>';
 
-    if(companycarData[company]){
-        companycarData[company].forEach(function(car){
+    if (companycarData[company]) {
+        companycarData[company].forEach(function(car) {
             let option = document.createElement("option");
             option.value = car;
             option.text = car;
             carselect.appendChild(option);
+        });
+    }
+}
+
+function updatefuels() {
+    const carName = document.getElementById("car_name").value;
+    const fuelselect = document.getElementById("fuel_type");
+
+    fuelselect.innerHTML = '<option value="" disabled selected>Select Fuel Type</option>';
+
+    if (carfuelData[carName]) {
+        carfuelData[carName].forEach(function(fuel) {
+            let option = document.createElement("option");
+            option.value = fuel;
+            option.text = fuel;
+            fuelselect.appendChild(option);
         });
     }
 }
